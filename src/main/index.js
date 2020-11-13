@@ -1,0 +1,86 @@
+'use strict'
+
+import { app, BrowserWindow, Menu } from 'electron'
+
+/**
+ * Set `__static` path to static files in production
+ * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
+ */
+if (process.env.NODE_ENV !== 'development') {
+  global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
+}
+
+let mainWindow
+const winURL = process.env.NODE_ENV === 'development'
+  ? `http://localhost:9080`
+  : `file://${__dirname}/index.html`
+
+function createWindow () {
+  if (process.platform === 'darwin') {
+    const template = [
+      {
+        label: 'Application',
+        submenu: [
+          {
+            label: 'Quit',
+            accelerator: 'Command+Q',
+            click: function () { app.quit() }
+          }
+        ]
+      },
+      {
+        label: 'Edit',
+        submenu: [
+          {
+            label: '复制',
+            accelerator: 'CmdOrCtrl+C',
+            selector: 'copy:'
+          },
+          {
+            label: '粘贴',
+            accelerator: 'CmdOrCtrl+V',
+            selector: 'paste:'
+          },
+          {
+            label: '全选',
+            accelerator: 'CmdOrCtrl+A',
+            selector: 'selectAll:'
+          }
+        ]
+      }
+    ]
+    Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+  } else {
+    Menu.setApplicationMenu(null)
+  }
+  /**
+   * Initial window options
+   */
+  mainWindow = new BrowserWindow({
+    height: 563,
+    useContentSize: true,
+    width: 1000,
+    webPreferences: { webSecurity: false }
+  })
+
+  mainWindow.loadURL(winURL)
+
+  mainWindow.on('closed', () => {
+    mainWindow = null
+  })
+  mainWindow.webContents.closeDevTools()
+}
+
+app.on('ready', createWindow)
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+})
+
+app.on('activate', () => {
+  if (mainWindow === null) {
+    createWindow()
+  }
+})
